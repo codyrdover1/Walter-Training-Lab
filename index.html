@@ -5,7 +5,7 @@
   <title>Walter Call Lab - Kevin Training</title>
   <style>
     body { font-family: Arial, sans-serif; background:#111827; color:#f9fafb; padding:30px; }
-    .box { max-width:850px; margin:auto; background:#1f2937; padding:30px; border-radius:16px; }
+    .box { max-width:900px; margin:auto; background:#1f2937; padding:30px; border-radius:16px; }
     h1 { color:#38bdf8; }
     .seller { background:#374151; padding:20px; border-left:5px solid #38bdf8; margin:20px 0; font-size:20px; }
     textarea { width:100%; height:110px; border-radius:10px; padding:15px; font-size:16px; }
@@ -13,10 +13,13 @@
     .feedback { margin-top:20px; padding:20px; border-radius:10px; background:#111827; }
     .good { border-left:5px solid #22c55e; }
     .bad { border-left:5px solid #ef4444; }
+    .warn { border-left:5px solid #f59e0b; }
     .score { display:flex; gap:15px; flex-wrap:wrap; margin-top:20px; }
     .score div { background:#374151; padding:12px 16px; border-radius:10px; }
+    .doors { background:#0f172a; padding:15px; border-radius:10px; margin-top:15px; }
   </style>
 </head>
+
 <body>
 <div class="box">
   <h1>Walter Call Lab</h1>
@@ -26,6 +29,7 @@
     <div>Scenario: <span id="num">1</span>/10</div>
     <div>Depth Score: <span id="score">0</span></div>
     <div>Missed Opportunities: <span id="misses">0</span></div>
+    <div>Current Door: <span id="door">None</span></div>
   </div>
 
   <div class="seller" id="seller"></div>
@@ -42,55 +46,115 @@
 const scenarios = [
   {
     seller: "Honestly... the house just feels too big now.",
-    good: ["what changed","too big","when did","how long","feel","different","what makes"],
-    miss: "You heard 'too big' as a fact, but you didn’t uncover what changed or what that means emotionally."
+    clue: "Too big is not just square footage. It could mean kids left, spouse passed, aging, loneliness, maintenance fatigue, or life has changed.",
+    bestDoors: ["Meaning", "Relevance", "Purpose"],
+    examples: [
+      "What changed where it started feeling too big?",
+      "How long has it felt that way?",
+      "What would feel like a better fit for this stage of life?"
+    ]
   },
   {
     seller: "We’re selling because of a divorce.",
-    good: ["what has","how has","process","been like","timeline because","both","decision"],
-    miss: "Divorce is not just a reason. It usually carries conflict, fatigue, urgency, and decision complexity."
+    clue: "Divorce usually carries decision tension, emotional fatigue, timeline pressure, and multiple decision makers.",
+    bestDoors: ["Meaning", "Relevance", "Description"],
+    examples: [
+      "What has this process been like for both of you?",
+      "Are you both aligned on selling, or is that still being worked through?",
+      "Is there a timeline tied to the divorce process?"
+    ]
   },
   {
     seller: "I inherited it from my mom, and I just don’t know what to do with it.",
-    good: ["sorry","what has","responsibility","mom","hardest","family","burden"],
-    miss: "You skipped over grief and responsibility. Inherited houses often carry emotional weight."
+    clue: "Inheritance often combines grief, responsibility, family dynamics, and uncertainty.",
+    bestDoors: ["Meaning", "Purpose", "Value"],
+    examples: [
+      "I’m sorry to hear that. What has carrying this responsibility been like?",
+      "What would feel like the right outcome for you and your family?",
+      "What has made this decision hard to sort through?"
+    ]
   },
   {
     seller: "I’m tired of being a landlord.",
-    good: ["tired","what happened","tenants","maintenance","how long","stress","what changed"],
-    miss: "Landlord fatigue needs to be unpacked. What specifically made them tired?"
+    clue: "Landlord fatigue needs specifics. Tired of tenants, repairs, calls, vacancies, risk, or just the identity of being responsible?",
+    bestDoors: ["Description", "Meaning", "Relevance"],
+    examples: [
+      "What part of being a landlord has worn on you the most?",
+      "Was there something that happened recently that made you say enough is enough?",
+      "How long have you been feeling that way?"
+    ]
   },
   {
     seller: "We’re a few months behind, but we’re not in foreclosure yet.",
-    good: ["behind","what happens","auction","how much","pressure","trying to avoid","timeline"],
-    miss: "Financial distress requires consequence questions. What happens if nothing changes?"
+    clue: "This is a consequence and urgency door. Kevin must not panic-pitch. He needs to understand risk, timeline, and what they’re trying to protect.",
+    bestDoors: ["Relevance", "Purpose", "Description"],
+    examples: [
+      "What are you trying to avoid happening from here?",
+      "Have they given you any kind of deadline or notice yet?",
+      "What would a clean exit need to look like for you?"
+    ]
   },
   {
     seller: "The house is vacant right now, so we’re just paying bills on it.",
-    good: ["paying","cost","vacant","how long","burden","what happens","monthly"],
-    miss: "Vacancy creates hidden costs. You need to make the cost of waiting visible."
+    clue: "Vacancy creates hidden cost: taxes, insurance, utilities, maintenance, vandalism risk, and mental drag.",
+    bestDoors: ["Relevance", "Value", "Meaning"],
+    examples: [
+      "How long has it been sitting vacant?",
+      "What is it costing you each month to keep it?",
+      "At what point does carrying it start to not make sense?"
+    ]
   },
   {
     seller: "My health just isn’t what it used to be, and keeping up with the house is hard.",
-    good: ["health","hard","keeping up","what part","how affecting","support","relief"],
-    miss: "Health is a human concern, not just a timeline clue. Slow down and stay with it."
+    clue: "Health is personal. Slow down. This is not just a timeline clue.",
+    bestDoors: ["Meaning", "Value", "Purpose"],
+    examples: [
+      "What part of keeping up with it has become hardest?",
+      "How has that changed your day-to-day life?",
+      "What would taking this off your plate make possible for you?"
+    ]
   },
   {
     seller: "We’re just seeing what our options are.",
-    good: ["what prompted","options","why now","hoping","concern","what changed","ideal"],
-    miss: "Nobody fills out a form for no reason. 'Options' usually hides a concern."
+    clue: "Options usually hides a concern. Something prompted the form.",
+    bestDoors: ["Relevance", "Purpose", "Meaning"],
+    examples: [
+      "What prompted you to start looking at options now?",
+      "What are you hoping one of those options solves?",
+      "If there was an ideal outcome, what would it look like?"
+    ]
   },
   {
     seller: "I’ve had other investors call me, so I’m mostly looking for the best price.",
-    good: ["best price mean","besides price","guaranteed","certainty","compare","what matters","risk"],
-    miss: "Don’t accept the price frame too quickly. Find out what 'best' means beyond number."
+    clue: "Best price is a frame. Kevin needs to discover whether they mean highest number, highest certainty, best net, fastest close, or least hassle.",
+    bestDoors: ["Value", "Meaning", "Relevance"],
+    examples: [
+      "When you say best price, do you mean highest number or best overall certainty?",
+      "Besides the number, what would make one offer safer than another?",
+      "Have any of those offers explained exactly what could change before closing?"
+    ]
   },
   {
     seller: "We want to move, but the house needs work, and we don’t really have the money or time to deal with repairs.",
-    good: ["money","time","repairs","move","what happens","ideal outcome","holding you back"],
-    miss: "This has multiple concerns: move, repairs, money, and time. You need to prioritize the pain."
+    clue: "Multiple concerns: move, money, time, repairs, opportunity cost. Kevin needs to prioritize the pressure.",
+    bestDoors: ["Relevance", "Value", "Purpose"],
+    examples: [
+      "Which part is creating the most pressure right now: the move, the repairs, the money, or the time?",
+      "What happens to your moving plans if the repairs hold things up?",
+      "What would need to happen for this to feel simple?"
+    ]
   }
 ];
+
+const thinkingDoors = {
+  Description: ["what exactly", "tell me more", "help me understand", "what part", "what kind", "how much", "how many", "condition", "repairs", "owe", "mortgage"],
+  Meaning: ["what has", "what does", "mean", "feel", "felt", "hard", "stress", "like for you", "weighing", "tired", "frustrating"],
+  Relevance: ["why now", "what changed", "what prompted", "how long", "at what point", "if nothing changes", "what happens", "deadline", "risk"],
+  Value: ["important", "ideal", "best", "matter most", "helpful", "relief", "peace", "easier", "worth", "outcome"],
+  Purpose: ["move forward", "next chapter", "trying to accomplish", "hoping to", "future", "what would", "behind you", "free to", "goal"]
+};
+
+const badMoves = ["offer", "cash offer", "price", "number", "bedroom", "bathroom", "sqft", "square feet", "roof", "hvac", "repairs", "timeline", "close"];
 
 let current = 0;
 let score = 0;
@@ -101,33 +165,94 @@ function loadScenario() {
   document.getElementById("seller").innerText = "Seller: “" + scenarios[current].seller + "”";
   document.getElementById("answer").value = "";
   document.getElementById("feedback").innerHTML = "";
+  document.getElementById("door").innerText = "None";
+}
+
+function detectDoor(answer) {
+  let results = {};
+
+  for (let door in thinkingDoors) {
+    results[door] = thinkingDoors[door].filter(word => answer.includes(word)).length;
+  }
+
+  let bestDoor = "Unclear";
+  let bestScore = 0;
+
+  for (let door in results) {
+    if (results[door] > bestScore) {
+      bestScore = results[door];
+      bestDoor = door;
+    }
+  }
+
+  return { bestDoor, bestScore };
+}
+
+function detectBadMove(answer) {
+  return badMoves.some(word => answer.includes(word));
 }
 
 function submitAnswer() {
   const ans = document.getElementById("answer").value.toLowerCase();
   const s = scenarios[current];
-  let hits = s.good.filter(word => ans.includes(word)).length;
+  const doorResult = detectDoor(ans);
+  const badMove = detectBadMove(ans);
+  const fb = document.getElementById("feedback");
 
-  let fb = document.getElementById("feedback");
+  document.getElementById("door").innerText = doorResult.bestDoor;
 
-  if (hits >= 2) {
+  if (badMove && doorResult.bestScore < 2) {
+    misses += 1;
+    fb.innerHTML = `
+      <div class="feedback bad">
+        <h3>🚨 Simulation Paused</h3>
+        <p><strong>You moved too fast.</strong></p>
+        <p>You jumped toward facts, price, property details, timeline, or offer mechanics before understanding the seller’s meaning.</p>
+        <p><strong>Seller clue:</strong> ${s.clue}</p>
+        <div class="doors">
+          <p><strong>Better doors to open here:</strong> ${s.bestDoors.join(", ")}</p>
+          <p><strong>Possible questions:</strong></p>
+          <ul>${s.examples.map(e => `<li>${e}</li>`).join("")}</ul>
+        </div>
+        <p><strong>Retry:</strong> Ask a question that helps you understand what this situation means to the seller.</p>
+      </div>`;
+  } else if (s.bestDoors.includes(doorResult.bestDoor)) {
     score += 10;
     fb.innerHTML = `
       <div class="feedback good">
-        <h3>✅ Good Response</h3>
-        <p>You stayed close to the seller’s statement instead of jumping ahead.</p>
-        <p><strong>Walter Coaching:</strong> This response begins to uncover Meaning, not just Description.</p>
-        <p><strong>Next layer to explore:</strong> What happens if they do nothing?</p>
+        <h3>✅ Strong Interpretive Question</h3>
+        <p>You opened the <strong>${doorResult.bestDoor}</strong> door, which fits this seller statement well.</p>
+        <p><strong>Walter Coaching:</strong> You did not just collect information. You started interpreting significance.</p>
+        <p><strong>Seller clue:</strong> ${s.clue}</p>
+        <div class="doors">
+          <p><strong>Next layer:</strong> After they answer, listen for consequence. What happens if nothing changes?</p>
+        </div>
+      </div>`;
+  } else if (doorResult.bestDoor !== "Unclear") {
+    score += 5;
+    fb.innerHTML = `
+      <div class="feedback warn">
+        <h3>⚠️ Decent Question, But Not Deepest Door</h3>
+        <p>You opened the <strong>${doorResult.bestDoor}</strong> door.</p>
+        <p>That can work, but this seller statement probably called for: <strong>${s.bestDoors.join(", ")}</strong>.</p>
+        <p><strong>Seller clue:</strong> ${s.clue}</p>
+        <div class="doors">
+          <p><strong>Stronger options:</strong></p>
+          <ul>${s.examples.map(e => `<li>${e}</li>`).join("")}</ul>
+        </div>
       </div>`;
   } else {
     misses += 1;
     fb.innerHTML = `
       <div class="feedback bad">
         <h3>🚨 Simulation Paused</h3>
-        <p>${s.miss}</p>
-        <p><strong>DMRVP Missed:</strong> Meaning / Relevance</p>
-        <p><strong>Try asking:</strong> “What changed where this started feeling like something you needed to deal with?”</p>
-        <p><strong>Retry before moving on.</strong></p>
+        <p>I can’t tell what you were trying to understand.</p>
+        <p>A strong question should open one of these doors: Description, Meaning, Relevance, Value, or Purpose.</p>
+        <p><strong>Seller clue:</strong> ${s.clue}</p>
+        <div class="doors">
+          <p><strong>Try one of these:</strong></p>
+          <ul>${s.examples.map(e => `<li>${e}</li>`).join("")}</ul>
+        </div>
       </div>`;
   }
 
@@ -145,7 +270,8 @@ function nextScenario() {
       <div class="feedback good">
         <h2>Final Score: ${score}/100</h2>
         <p><strong>Missed Opportunities:</strong> ${misses}</p>
-        <p><strong>Walter Summary:</strong> Kevin’s goal is to stop collecting facts and start uncovering meaning. Any seller statement with emotional weight deserves at least one follow-up before moving to condition, price, or timeline.</p>
+        <p><strong>Walter Summary:</strong> Kevin’s goal is not to memorize questions. His goal is to recognize which door the seller just opened: Description, Meaning, Relevance, Value, or Purpose.</p>
+        <p>If the seller gives emotional weight, stay there. If the seller gives a vague reason, clarify. If the seller gives pressure, uncover consequence. If the seller talks price, redefine value.</p>
       </div>`;
   }
 }
