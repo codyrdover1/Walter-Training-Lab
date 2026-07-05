@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Walter Call Lab - Kevin Training</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111827; color:#f9fafb; padding:30px; }
+    .box { max-width:850px; margin:auto; background:#1f2937; padding:30px; border-radius:16px; }
+    h1 { color:#38bdf8; }
+    .seller { background:#374151; padding:20px; border-left:5px solid #38bdf8; margin:20px 0; font-size:20px; }
+    textarea { width:100%; height:110px; border-radius:10px; padding:15px; font-size:16px; }
+    button { background:#38bdf8; color:#111827; border:0; padding:14px 22px; border-radius:10px; font-weight:bold; cursor:pointer; margin-top:12px; }
+    .feedback { margin-top:20px; padding:20px; border-radius:10px; background:#111827; }
+    .good { border-left:5px solid #22c55e; }
+    .bad { border-left:5px solid #ef4444; }
+    .score { display:flex; gap:15px; flex-wrap:wrap; margin-top:20px; }
+    .score div { background:#374151; padding:12px 16px; border-radius:10px; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>Walter Call Lab</h1>
+  <p><strong>Mission:</strong> Don’t move the call forward until you understand the seller’s meaning.</p>
+
+  <div class="score">
+    <div>Scenario: <span id="num">1</span>/10</div>
+    <div>Depth Score: <span id="score">0</span></div>
+    <div>Missed Opportunities: <span id="misses">0</span></div>
+  </div>
+
+  <div class="seller" id="seller"></div>
+
+  <textarea id="answer" placeholder="Kevin, type your response here..."></textarea>
+  <br />
+  <button onclick="submitAnswer()">Submit Response</button>
+  <button onclick="nextScenario()">Next Scenario</button>
+
+  <div id="feedback"></div>
+</div>
+
+<script>
+const scenarios = [
+  {
+    seller: "Honestly... the house just feels too big now.",
+    good: ["what changed","too big","when did","how long","feel","different","what makes"],
+    miss: "You heard 'too big' as a fact, but you didn’t uncover what changed or what that means emotionally."
+  },
+  {
+    seller: "We’re selling because of a divorce.",
+    good: ["what has","how has","process","been like","timeline because","both","decision"],
+    miss: "Divorce is not just a reason. It usually carries conflict, fatigue, urgency, and decision complexity."
+  },
+  {
+    seller: "I inherited it from my mom, and I just don’t know what to do with it.",
+    good: ["sorry","what has","responsibility","mom","hardest","family","burden"],
+    miss: "You skipped over grief and responsibility. Inherited houses often carry emotional weight."
+  },
+  {
+    seller: "I’m tired of being a landlord.",
+    good: ["tired","what happened","tenants","maintenance","how long","stress","what changed"],
+    miss: "Landlord fatigue needs to be unpacked. What specifically made them tired?"
+  },
+  {
+    seller: "We’re a few months behind, but we’re not in foreclosure yet.",
+    good: ["behind","what happens","auction","how much","pressure","trying to avoid","timeline"],
+    miss: "Financial distress requires consequence questions. What happens if nothing changes?"
+  },
+  {
+    seller: "The house is vacant right now, so we’re just paying bills on it.",
+    good: ["paying","cost","vacant","how long","burden","what happens","monthly"],
+    miss: "Vacancy creates hidden costs. You need to make the cost of waiting visible."
+  },
+  {
+    seller: "My health just isn’t what it used to be, and keeping up with the house is hard.",
+    good: ["health","hard","keeping up","what part","how affecting","support","relief"],
+    miss: "Health is a human concern, not just a timeline clue. Slow down and stay with it."
+  },
+  {
+    seller: "We’re just seeing what our options are.",
+    good: ["what prompted","options","why now","hoping","concern","what changed","ideal"],
+    miss: "Nobody fills out a form for no reason. 'Options' usually hides a concern."
+  },
+  {
+    seller: "I’ve had other investors call me, so I’m mostly looking for the best price.",
+    good: ["best price mean","besides price","guaranteed","certainty","compare","what matters","risk"],
+    miss: "Don’t accept the price frame too quickly. Find out what 'best' means beyond number."
+  },
+  {
+    seller: "We want to move, but the house needs work, and we don’t really have the money or time to deal with repairs.",
+    good: ["money","time","repairs","move","what happens","ideal outcome","holding you back"],
+    miss: "This has multiple concerns: move, repairs, money, and time. You need to prioritize the pain."
+  }
+];
+
+let current = 0;
+let score = 0;
+let misses = 0;
+
+function loadScenario() {
+  document.getElementById("num").innerText = current + 1;
+  document.getElementById("seller").innerText = "Seller: “" + scenarios[current].seller + "”";
+  document.getElementById("answer").value = "";
+  document.getElementById("feedback").innerHTML = "";
+}
+
+function submitAnswer() {
+  const ans = document.getElementById("answer").value.toLowerCase();
+  const s = scenarios[current];
+  let hits = s.good.filter(word => ans.includes(word)).length;
+
+  let fb = document.getElementById("feedback");
+
+  if (hits >= 2) {
+    score += 10;
+    fb.innerHTML = `
+      <div class="feedback good">
+        <h3>✅ Good Response</h3>
+        <p>You stayed close to the seller’s statement instead of jumping ahead.</p>
+        <p><strong>Walter Coaching:</strong> This response begins to uncover Meaning, not just Description.</p>
+        <p><strong>Next layer to explore:</strong> What happens if they do nothing?</p>
+      </div>`;
+  } else {
+    misses += 1;
+    fb.innerHTML = `
+      <div class="feedback bad">
+        <h3>🚨 Simulation Paused</h3>
+        <p>${s.miss}</p>
+        <p><strong>DMRVP Missed:</strong> Meaning / Relevance</p>
+        <p><strong>Try asking:</strong> “What changed where this started feeling like something you needed to deal with?”</p>
+        <p><strong>Retry before moving on.</strong></p>
+      </div>`;
+  }
+
+  document.getElementById("score").innerText = score;
+  document.getElementById("misses").innerText = misses;
+}
+
+function nextScenario() {
+  if (current < scenarios.length - 1) {
+    current++;
+    loadScenario();
+  } else {
+    document.getElementById("seller").innerText = "Training Complete.";
+    document.getElementById("feedback").innerHTML = `
+      <div class="feedback good">
+        <h2>Final Score: ${score}/100</h2>
+        <p><strong>Missed Opportunities:</strong> ${misses}</p>
+        <p><strong>Walter Summary:</strong> Kevin’s goal is to stop collecting facts and start uncovering meaning. Any seller statement with emotional weight deserves at least one follow-up before moving to condition, price, or timeline.</p>
+      </div>`;
+  }
+}
+
+loadScenario();
+</script>
+</body>
+</html>
